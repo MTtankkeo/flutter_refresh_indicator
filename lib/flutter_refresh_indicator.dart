@@ -1,3 +1,3 @@
 library;
 
-export 'widgets/clmap_refresh_indicator.dart';
+export 'widgets/clamping_refresh_indicator.dart';

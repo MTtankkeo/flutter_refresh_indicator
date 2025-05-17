@@ -19,7 +19,8 @@ class BouncingRefreshIndicator extends StatefulWidget {
     this.displacementPercent = 0.5,
     this.duration = const Duration(milliseconds: 300),
     this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
-    this.fadeDuration = const Duration(milliseconds: 200),
+    this.fadeDuration = const Duration(milliseconds: 300),
+    this.fadeCurve = Curves.ease,
     required this.child
   });
 
@@ -31,6 +32,7 @@ class BouncingRefreshIndicator extends StatefulWidget {
   final Duration duration;
   final Curve curve;
   final Duration fadeDuration;
+  final Curve fadeCurve;
   final Widget child;
 
   @override
@@ -40,8 +42,9 @@ class BouncingRefreshIndicator extends StatefulWidget {
 class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> with TickerProviderStateMixin {
   BouncingRefreshIndicatorStatus status = BouncingRefreshIndicatorStatus.idle;
   bool _isDragging = false;
-  bool _isBouncing = false;
-  
+
+  NestedScrollPosition? _cacehdScrollPosition;
+
   late final AppBarController _appBarController = AppBarController();
   late final AppBarPosition _appbarPosition;
 
@@ -117,97 +120,97 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      ignoring: _isBouncing,
-      child: GlobalListener(
-        onPointerCancel: (event) => _isDragging = false,
-        onPointerDown: (event) => _isDragging = true,
-        onPointerUp: (event) {
-          _isDragging = false;
+    return GlobalListener(
+      onPointerCancel: (event) => _isDragging = false,
+      onPointerDown: (event) => _isDragging = true,
+      onPointerUp: (event) {
+        _isDragging = false;
 
-          if ( distanceFraction > widget.displacementPercent) {
-            status = BouncingRefreshIndicatorStatus.loading;
-            _isBouncing = true;
-            animateTo(-areaHeight);
-            widget.onRefresh().then((value) => fadeout());
-          }
-        },
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _appbarPosition,
-                builder: (context, child) {
-                  return ClipRRect(
-                    child: Transform.translate(
-                      offset: Offset(0, -_appbarPosition.pixels),
-                      child: Container(
-                        height: areaHeight,
-                        alignment: Alignment.topCenter,
-                        child: Builder(
-                          builder: (context) {
-                            final bool isActivable;
-                            final bool isActive = status != BouncingRefreshIndicatorStatus.idle;
+        if ( distanceFraction > widget.displacementPercent) {
+          _cacehdScrollPosition?.goIdle();
+          _cacehdScrollPosition?.lentPixels = 0.0;
 
-                            if (isActive) {
-                              isActivable = true;
-                            } else {
-                              isActivable = _isDragging && distanceFraction > widget.displacementPercent;
-                            }
-
-                            return AnimatedOpacity(
-                              opacity: isActivable ? 1.0 : 0.5,
-                              duration: widget.fadeDuration,
-                              child: RefreshProgressIndicator(
-                                color: widget.foregroundColor,
-                                value: isActive ? null : 0.8 * distanceFraction,
-                                backgroundColor: widget.backgroundColor ?? Colors.transparent,
-                                elevation: 0,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            AnimatedBuilder(
+          status = BouncingRefreshIndicatorStatus.loading;
+          animateTo(-areaHeight);
+          widget.onRefresh().then((value) => fadeout());
+        }
+      },
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: AnimatedBuilder(
               animation: _appbarPosition,
               builder: (context, child) {
-                final Offset appbar = Offset(0, _appbarPosition.expandedPercent);
-                final Offset offset = Offset(0, -distancePixels * appbar.dy);
+                return ClipRRect(
+                  child: Transform.translate(
+                    offset: Offset(0, -_appbarPosition.pixels),
+                    child: Container(
+                      height: areaHeight,
+                      alignment: Alignment.topCenter,
+                      child: Builder(
+                        builder: (context) {
+                          final bool isActivable;
+                          final bool isActive = status != BouncingRefreshIndicatorStatus.idle;
 
-                return Transform.translate(
-                  transformHitTests: false,
-                  offset: offset,
-                  child: NestedScrollConnection(
-                    onPreScroll: _handleNestedScroll,
-                    onPostScroll: _handleNestedScroll,
-                    onBouncing: (available, position) {
-                      if (status == BouncingRefreshIndicatorStatus.idle) {
-                        final double prvValue = distancePixels;
-                        final double newValue = (prvValue + available).clamp(-double.infinity, 0);
-                        moveTo(newValue);
-                        return newValue - prvValue;
-                      }
+                          if (isActive) {
+                            isActivable = true;
+                          } else {
+                            isActivable = _isDragging && distanceFraction > widget.displacementPercent;
+                          }
 
-                      return _isBouncing ? available : 0.0;
-                    },
-                    child: NotificationListener<ScrollEndNotification>(
-                      onNotification: (notification) {
-                        setState(() => _isBouncing = false);
-                        return true;
-                      },
-                      child: widget.child,
+                          return AnimatedOpacity(
+                            opacity: isActivable ? 1.0 : 0.5,
+                            duration: widget.fadeDuration,
+                            curve: widget.curve,
+                            child: RefreshProgressIndicator(
+                              color: widget.foregroundColor,
+                              value: isActive ? null : 0.8 * distanceFraction,
+                              backgroundColor: widget.backgroundColor ?? Colors.transparent,
+                              elevation: 0,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 );
               },
             ),
-          ],
-        ),
+          ),
+          AnimatedBuilder(
+            animation: _appbarPosition,
+            builder: (context, child) {
+              final Offset appbar = Offset(0, _appbarPosition.expandedPercent);
+              final Offset offset = Offset(0, -distancePixels * appbar.dy);
+
+              return Transform.translate(
+                transformHitTests: false,
+                offset: offset,
+                child: NestedScrollConnection(
+                  onPreScroll: _handleNestedScroll,
+                  onPostScroll: _handleNestedScroll,
+                  onBouncing: (available, position) {
+                    assert(
+                      position is NestedScrollPosition,
+                      "The ScrollController of a Scrollable widget must always be defined as a NestedScrollController."
+                    );
+                    _cacehdScrollPosition = position as NestedScrollPosition;
+
+                    if (status == BouncingRefreshIndicatorStatus.idle) {
+                      final double prvValue = distancePixels;
+                      final double newValue = (prvValue + available).clamp(-double.infinity, 0);
+                      moveTo(newValue);
+                      return newValue - prvValue;
+                    }
+
+                    return 0.0;
+                  },
+                  child: widget.child,
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

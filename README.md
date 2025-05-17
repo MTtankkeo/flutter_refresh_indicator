@@ -5,11 +5,32 @@ This package provides a refresh indicator widget that is far more flexible and n
 # Usage
 The following explains the basic usage of this package.
 
+## When Context
+
+```dart
+import 'package:flutter/material.dart' hide RefreshIndicator;
+
+RefreshIndicator(
+    onRefresh: ..., // AsyncCallback
+    child: ...
+),
+```
+
 ## When Android
 This widget for ClampingScrollPhysics.
 
 ```dart
 ClampingRefreshIndicator(
+    onRefresh: ..., // AsyncCallback
+    child: ...
+),
+```
+
+## When IOS
+This widget for BouncingScrollPhysics.
+
+```dart
+BouncingRefreshIndicator(
     onRefresh: ..., // AsyncCallback
     child: ...
 ),

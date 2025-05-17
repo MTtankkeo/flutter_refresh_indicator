@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_appbar/flutter_appbar.dart';
+import 'package:flutter_refresh_indicator/widgets/global_listener.dart';
 
 enum ClampingRefreshIndicatorStatus {
   idle,
@@ -44,9 +45,9 @@ class ClampingRefreshIndicator extends StatefulWidget {
 
 class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> with TickerProviderStateMixin {
   ClampingRefreshIndicatorStatus status = ClampingRefreshIndicatorStatus.idle;
-  bool isRefreshing = false;
-  bool isDragging = false;
-  bool isConsumedFling = false;
+  bool _isDragging = false;
+
+  bool get isRefreshing => status == ClampingRefreshIndicatorStatus.loading;
 
   AnimationController? _fadeoutAniamtion;
   AnimationController? _pullingAnimation;
@@ -103,7 +104,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
   double _handleNestedScroll(double available, ScrollPosition position) {
     if (status == ClampingRefreshIndicatorStatus.loading
      || position.pixels != 0.0
-     || !isDragging) {
+     || !_isDragging) {
       return 0.0;
     } else {
       status = ClampingRefreshIndicatorStatus.pulling;
@@ -126,8 +127,9 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
       ? Curves.easeOut.transform(distanceFraction)
       : distanceFraction;
 
-    return Listener(
-      onPointerDown: (event) => isDragging = true,
+    return GlobalListener(
+      onPointerCancel: (event) => _isDragging = false,
+      onPointerDown: (event) => _isDragging = true,
       onPointerUp: (event) {
         if (fraction >= widget.displacementPercent) {
           Future.microtask(() => status = ClampingRefreshIndicatorStatus.loading);
@@ -141,7 +143,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
           _animateTo(0.0);
         }
 
-        isDragging = false;
+        _isDragging = false;
       },
       child: ClipRRect(
         child: Stack(

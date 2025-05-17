@@ -38,9 +38,9 @@ class _RefreshIndicatorState extends State<RefreshIndicator> {
     );
     
     if (current == RefreshIndicatorType.clamping) {
-      return BouncingRefreshIndicator(onRefresh: widget.onRefresh, child: widget.child);
-    } else {
       return ClampingRefreshIndicator(onRefresh: widget.onRefresh, child: widget.child);
+    } else {
+      return BouncingRefreshIndicator(onRefresh: widget.onRefresh, child: widget.child);
     }
   }
 }

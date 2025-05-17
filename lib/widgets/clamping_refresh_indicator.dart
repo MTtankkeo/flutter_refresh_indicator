@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_appbar/flutter_appbar.dart';
 import 'package:flutter_refresh_indicator/widgets/global_listener.dart';
 
@@ -106,7 +107,9 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
      || position.pixels != 0.0
      || !_isDragging) {
       return 0.0;
-    } else {
+    }
+
+    if (_isDragging && position.userScrollDirection == ScrollDirection.forward) {
       status = ClampingRefreshIndicatorStatus.pulling;
     }
 

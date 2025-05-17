@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide AppBar;
 import 'package:flutter_appbar/flutter_appbar.dart';
 import 'package:flutter_refresh_indicator/widgets/global_listener.dart';
+import 'package:flutter_refresh_indicator/widgets/primary_refresh_indicator.dart';
 
 enum BouncingRefreshIndicatorStatus {
   idle,
@@ -120,6 +121,10 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
 
   @override
   Widget build(BuildContext context) {
+    final PrimaryRefreshIndicator? primary = PrimaryRefreshIndicator.maybeOf(context);
+    final Color? foregroundColor = widget.foregroundColor ?? primary?.bouncing?.foregroundColor;
+    final Color? backgroundColor = widget.backgroundColor ?? primary?.bouncing?.backgroundColor;
+
     return GlobalListener(
       onPointerCancel: (event) => _isDragging = false,
       onPointerDown: (event) => _isDragging = true,
@@ -163,9 +168,9 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
                             duration: widget.fadeDuration,
                             curve: widget.curve,
                             child: RefreshProgressIndicator(
-                              color: widget.foregroundColor,
+                              color: foregroundColor,
+                              backgroundColor: backgroundColor ?? Colors.transparent,
                               value: isActive ? null : 0.8 * distanceFraction,
-                              backgroundColor: widget.backgroundColor ?? Colors.transparent,
                               elevation: 0,
                             ),
                           );

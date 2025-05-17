@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_appbar/flutter_appbar.dart';
+import 'package:flutter_refresh_indicator/flutter_refresh_indicator.dart';
 import 'package:flutter_refresh_indicator/widgets/global_listener.dart';
 
 enum ClampingRefreshIndicatorStatus {
@@ -126,6 +127,10 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
 
   @override
   Widget build(BuildContext context) {
+    final PrimaryRefreshIndicator? primary = PrimaryRefreshIndicator.maybeOf(context);
+    final Color? foregroundColor = widget.foregroundColor ?? primary?.clamping?.foregroundColor;
+    final Color? backgroundColor = widget.backgroundColor ?? primary?.clamping?.backgroundColor;
+
     final fraction = status == ClampingRefreshIndicatorStatus.pulling
       ? Curves.easeOut.transform(distanceFraction)
       : distanceFraction;
@@ -173,8 +178,8 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
                       fraction: fraction,
                       fadeFraction: fadeFraction,
                       status: status,
-                      foregroundColor: widget.foregroundColor,
-                      backgroundColor: widget.backgroundColor
+                      foregroundColor: foregroundColor,
+                      backgroundColor: backgroundColor
                     ),
                   ),
                 ),

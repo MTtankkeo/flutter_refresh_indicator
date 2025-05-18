@@ -4,7 +4,7 @@ This package provides a refresh indicator widget that is far more flexible and n
 ## Preview
 The gif image below may appear distorted and choppy due to compression.
 
-![clamping](https://github.com/user-attachments/assets/979f6cef-5f32-4cdd-b9c4-627d56598a42)
+![clamping](https://github.com/user-attachments/assets/e890bacd-5d73-49b4-8456-561df282eba1)
 ![bouncing](https://github.com/user-attachments/assets/e2ff15b8-838a-4e43-babf-dca2f0d22841)
 
 ## Usage

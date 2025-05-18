@@ -7,6 +7,13 @@ enum RefreshIndicatorType {
   bouncing
 }
 
+/// Signature for the alias that is representing of the [RefreshIndicator] widget.
+typedef PullToRefresh = RefreshIndicator;
+
+/// Signature for the alias that is representing of the [RefreshIndicator] widget.
+typedef SwipeToRefresh = RefreshIndicator;
+
+/// A widget that supports the Material "swipe to refresh" idiom.
 class RefreshIndicator extends StatefulWidget {
   const RefreshIndicator({
     super.key,

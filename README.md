@@ -14,6 +14,7 @@ The following explains the basic usage of this package.
 ```dart
 import 'package:flutter/material.dart' hide RefreshIndicator;
 
+// Other Alias: PullToRefresh and SwipeToRefresh
 RefreshIndicator(
     onRefresh: ..., // AsyncCallback
     child: ...

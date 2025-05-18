@@ -25,7 +25,12 @@ class BouncingRefreshIndicator extends StatefulWidget {
     required this.child
   });
 
+  /// The callback that's called when the user has dragged the refresh indicator
+  /// far enough to demonstrate that they want the app to refresh.
+  /// 
+  /// The returned [Future] must complete when the refresh operation is finished.
   final AsyncCallback onRefresh;
+
   final Color? foregroundColor;
   final Color? backgroundColor;
   final double displacement;
@@ -34,6 +39,8 @@ class BouncingRefreshIndicator extends StatefulWidget {
   final Curve curve;
   final Duration fadeDuration;
   final Curve fadeCurve;
+
+  /// The widget to be contained as descendant by this widget.
   final Widget child;
 
   @override

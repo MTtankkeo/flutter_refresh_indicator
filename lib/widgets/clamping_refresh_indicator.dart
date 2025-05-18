@@ -20,7 +20,7 @@ class ClampingRefreshIndicator extends StatefulWidget {
     this.maxDragPercent = 0.3,
     this.displacement = 150,
     this.displacementPercent = 0.5,
-    this.edgeOffset = 0.0,
+    // this.edgeOffset = 0.0,
     this.duration = const Duration(milliseconds: 200),
     this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
     this.fadeDuration = const Duration(milliseconds: 150),
@@ -28,17 +28,24 @@ class ClampingRefreshIndicator extends StatefulWidget {
     required this.child,
   });
 
+  /// The callback that's called when the user has dragged the refresh indicator
+  /// far enough to demonstrate that they want the app to refresh.
+  /// 
+  /// The returned [Future] must complete when the refresh operation is finished.
   final AsyncCallback onRefresh;
+
   final Color? foregroundColor;
   final Color? backgroundColor;
   final double maxDragPercent;
   final double displacement;
   final double displacementPercent;
-  final double edgeOffset;
+  // final double edgeOffset;
   final Duration duration;
   final Curve curve;
   final Duration fadeDuration;
   final Curve fadeCurve;
+
+  /// The widget to be contained as descendant by this widget.
   final Widget child;
 
   @override

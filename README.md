@@ -51,7 +51,7 @@ MaterialApp(
     theme: ThemeData(
         progressIndicatorTheme: ProgressIndicatorThemeData(
             color: ..., // foregroundColor
-            refreshBackgroundColor: ... // boregroundColor
+            refreshBackgroundColor: ... // backgroundColor
         )
     ),
 );

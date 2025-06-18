@@ -13,10 +13,10 @@ class ClampingRefreshIndicator extends StatefulWidget {
     required this.onRefresh,
     this.foregroundColor,
     this.backgroundColor,
-    this.maxDragPercent = 0.3,
+    this.maxDragDistance = 250,
     this.displacement = 150,
     this.displacementPercent = 0.5,
-    // this.edgeOffset = 0.0,
+    this.edgeOffset = 0.0,
     this.duration = const Duration(milliseconds: 200),
     this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
     this.fadeDuration = const Duration(milliseconds: 150),
@@ -32,10 +32,10 @@ class ClampingRefreshIndicator extends StatefulWidget {
 
   final Color? foregroundColor;
   final Color? backgroundColor;
-  final double maxDragPercent;
+  final double maxDragDistance;
   final double displacement;
   final double displacementPercent;
-  // final double edgeOffset;
+  final double edgeOffset;
   final Duration duration;
   final Curve curve;
   final Duration fadeDuration;
@@ -141,7 +141,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
       status = ClampingRefreshIndicatorStatus.pulling;
     }
 
-    final double factor = position.viewportDimension * widget.maxDragPercent;
+    final double factor = widget.maxDragDistance;
     final double newValue = (distanceFraction + (available / factor)).clamp(
       0.0,
       1.0,
@@ -195,6 +195,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
           children: [
             PrimaryScrollController(
               controller: NestedScrollController(),
+              scrollDirection: Axis.vertical,
               child: NestedScrollConnection(
                 propagation:
                     distanceFraction == 0
@@ -208,7 +209,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
 
             if (fraction != 0.0)
               Positioned.fill(
-                top: widget.displacement * fraction,
+                top: (widget.displacement * fraction) + widget.edgeOffset,
                 child: IgnorePointer(
                   child: Align(
                     alignment: Alignment.topCenter,

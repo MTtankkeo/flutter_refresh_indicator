@@ -155,49 +155,53 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
       },
       child: Stack(
         children: [
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _appbarPosition,
-              builder: (context, child) {
-                return ClipRRect(
-                  child: Transform.translate(
-                    offset: Offset(0, -_appbarPosition.pixels),
-                    child: Container(
-                      height: areaHeight,
-                      alignment: Alignment.topCenter,
-                      child: Builder(
-                        builder: (context) {
-                          final bool isActivable;
-                          final bool isActive =
-                              status != BouncingRefreshIndicatorStatus.idle;
+          AnimatedBuilder(
+            animation: _appbarPosition,
+            builder: (context, child) {
+              return Container(
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(),
+                height: distancePixels.abs(),
+                child: Transform.translate(
+                  offset: Offset(0, -_appbarPosition.pixels),
+                  child: OverflowBox(
+                    alignment: Alignment.topCenter,
+                    minWidth: areaHeight,
+                    maxWidth: areaHeight,
+                    minHeight: areaHeight,
+                    maxHeight: double.infinity,
+                    child: Builder(
+                      builder: (context) {
+                        final bool isActivable;
+                        final bool isActive =
+                            status != BouncingRefreshIndicatorStatus.idle;
 
-                          if (isActive) {
-                            isActivable = true;
-                          } else {
-                            isActivable =
-                                _isDragging &&
-                                distanceFraction > widget.displacementPercent;
-                          }
+                        if (isActive) {
+                          isActivable = true;
+                        } else {
+                          isActivable =
+                              _isDragging &&
+                              distanceFraction > widget.displacementPercent;
+                        }
 
-                          return AnimatedOpacity(
-                            opacity: isActivable ? 1.0 : 0.5,
-                            duration: widget.fadeDuration,
-                            curve: widget.curve,
-                            child: RefreshProgressIndicator(
-                              color: foregroundColor,
-                              backgroundColor:
-                                  backgroundColor ?? Colors.transparent,
-                              value: isActive ? null : 0.8 * distanceFraction,
-                              elevation: 0,
-                            ),
-                          );
-                        },
-                      ),
+                        return AnimatedOpacity(
+                          opacity: isActivable ? 1.0 : 0.5,
+                          duration: widget.fadeDuration,
+                          curve: widget.curve,
+                          child: RefreshProgressIndicator(
+                            color: foregroundColor,
+                            backgroundColor:
+                                backgroundColor ?? Colors.transparent,
+                            value: isActive ? null : 0.8 * distanceFraction,
+                            elevation: 0,
+                          ),
+                        );
+                      },
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
           AnimatedBuilder(
             animation: _appbarPosition,
@@ -230,7 +234,11 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
 
                     return 0.0;
                   },
-                  child: widget.child,
+                  child: PrimaryScrollController(
+                    controller: NestedScrollController(),
+                    scrollDirection: Axis.vertical,
+                    child: widget.child,
+                  ),
                 ),
               );
             },

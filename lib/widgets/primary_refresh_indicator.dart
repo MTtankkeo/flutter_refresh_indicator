@@ -5,7 +5,7 @@ import 'package:flutter_refresh_indicator/components/refresh_indicator_style.dar
 /// refresh indicators to all descendant widgets in the widget tree.
 class PrimaryRefreshIndicator extends InheritedWidget {
   const PrimaryRefreshIndicator({
-    super.key, 
+    super.key,
     this.clamping,
     this.bouncing,
     required super.child,
@@ -19,13 +19,13 @@ class PrimaryRefreshIndicator extends InheritedWidget {
 
   @override
   bool updateShouldNotify(PrimaryRefreshIndicator oldWidget) {
-    return oldWidget.clamping != clamping
-        || oldWidget.bouncing != bouncing;
+    return oldWidget.clamping != clamping || oldWidget.bouncing != bouncing;
   }
 
   /// Finds the [PrimaryRefreshIndicator] from the closest instanc
   /// of this class that encloses the given context.
   static PrimaryRefreshIndicator? maybeOf(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<PrimaryRefreshIndicator>();
+    return context
+        .dependOnInheritedWidgetOfExactType<PrimaryRefreshIndicator>();
   }
 }

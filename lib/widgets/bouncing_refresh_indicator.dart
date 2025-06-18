@@ -4,11 +4,7 @@ import 'package:flutter_appbar/flutter_appbar.dart';
 import 'package:flutter_refresh_indicator/widgets/global_listener.dart';
 import 'package:flutter_refresh_indicator/widgets/primary_refresh_indicator.dart';
 
-enum BouncingRefreshIndicatorStatus {
-  idle,
-  loading,
-  loaded
-}
+enum BouncingRefreshIndicatorStatus { idle, loading, loaded }
 
 class BouncingRefreshIndicator extends StatefulWidget {
   const BouncingRefreshIndicator({
@@ -22,12 +18,12 @@ class BouncingRefreshIndicator extends StatefulWidget {
     this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
     this.fadeDuration = const Duration(milliseconds: 300),
     this.fadeCurve = Curves.ease,
-    required this.child
+    required this.child,
   });
 
   /// The callback that's called when the user has dragged the refresh indicator
   /// far enough to demonstrate that they want the app to refresh.
-  /// 
+  ///
   /// The returned [Future] must complete when the refresh operation is finished.
   final AsyncCallback onRefresh;
 
@@ -44,10 +40,12 @@ class BouncingRefreshIndicator extends StatefulWidget {
   final Widget child;
 
   @override
-  State<BouncingRefreshIndicator> createState() => _BouncingRefreshIndicatorState();
+  State<BouncingRefreshIndicator> createState() =>
+      _BouncingRefreshIndicatorState();
 }
 
-class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> with TickerProviderStateMixin {
+class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
+    with TickerProviderStateMixin {
   BouncingRefreshIndicatorStatus status = BouncingRefreshIndicatorStatus.idle;
   bool _isDragging = false;
 
@@ -100,7 +98,11 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
 
   double _handleNestedScroll(double available, ScrollPosition scroll) {
     if (status == BouncingRefreshIndicatorStatus.loading) {
-      return _appBarController.consumeScroll(available, scroll, AppbarPropagation.next);
+      return _appBarController.consumeScroll(
+        available,
+        scroll,
+        AppbarPropagation.next,
+      );
     }
 
     return 0.0;
@@ -109,7 +111,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
   AppBarPosition createAppBarPosition() {
     return AppBarPosition(
       vsync: this,
-      behavior: MaterialAppBarBehavior(alwaysScrolling: false)
+      behavior: MaterialAppBarBehavior(alwaysScrolling: false),
     )..maxExtent = areaHeight;
   }
 
@@ -128,9 +130,13 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
 
   @override
   Widget build(BuildContext context) {
-    final PrimaryRefreshIndicator? primary = PrimaryRefreshIndicator.maybeOf(context);
-    final Color? foregroundColor = widget.foregroundColor ?? primary?.bouncing?.foregroundColor;
-    final Color? backgroundColor = widget.backgroundColor ?? primary?.bouncing?.backgroundColor;
+    final PrimaryRefreshIndicator? primary = PrimaryRefreshIndicator.maybeOf(
+      context,
+    );
+    final Color? foregroundColor =
+        widget.foregroundColor ?? primary?.bouncing?.foregroundColor;
+    final Color? backgroundColor =
+        widget.backgroundColor ?? primary?.bouncing?.backgroundColor;
 
     return GlobalListener(
       onPointerCancel: (event) => _isDragging = false,
@@ -138,7 +144,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
       onPointerUp: (event) {
         _isDragging = false;
 
-        if ( distanceFraction > widget.displacementPercent) {
+        if (distanceFraction > widget.displacementPercent) {
           _cacehdScrollPosition?.goIdle();
           _cacehdScrollPosition?.lentPixels = 0.0;
 
@@ -162,12 +168,15 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
                       child: Builder(
                         builder: (context) {
                           final bool isActivable;
-                          final bool isActive = status != BouncingRefreshIndicatorStatus.idle;
+                          final bool isActive =
+                              status != BouncingRefreshIndicatorStatus.idle;
 
                           if (isActive) {
                             isActivable = true;
                           } else {
-                            isActivable = _isDragging && distanceFraction > widget.displacementPercent;
+                            isActivable =
+                                _isDragging &&
+                                distanceFraction > widget.displacementPercent;
                           }
 
                           return AnimatedOpacity(
@@ -176,7 +185,8 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
                             curve: widget.curve,
                             child: RefreshProgressIndicator(
                               color: foregroundColor,
-                              backgroundColor: backgroundColor ?? Colors.transparent,
+                              backgroundColor:
+                                  backgroundColor ?? Colors.transparent,
                               value: isActive ? null : 0.8 * distanceFraction,
                               elevation: 0,
                             ),
@@ -204,13 +214,16 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
                   onBouncing: (available, position) {
                     assert(
                       position is NestedScrollPosition,
-                      "The ScrollController of a Scrollable widget must always be defined as a NestedScrollController."
+                      "The ScrollController of a Scrollable widget must always be defined as a NestedScrollController.",
                     );
                     _cacehdScrollPosition = position as NestedScrollPosition;
 
                     if (status == BouncingRefreshIndicatorStatus.idle) {
                       final double prvValue = distancePixels;
-                      final double newValue = (prvValue + available).clamp(-double.infinity, 0);
+                      final double newValue = (prvValue + available).clamp(
+                        -double.infinity,
+                        0,
+                      );
                       moveTo(newValue);
                       return newValue - prvValue;
                     }

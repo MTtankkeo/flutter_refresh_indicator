@@ -7,7 +7,7 @@ class GlobalListener extends StatefulWidget {
     this.onPointerMove,
     this.onPointerUp,
     this.onPointerCancel,
-    required this.child
+    required this.child,
   });
 
   final PointerDownEventListener? onPointerDown;
@@ -29,7 +29,9 @@ class _GlobalListenerState extends State<GlobalListener> {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.pointerRouter.removeGlobalRoute(_handlePointerEvent);
+    WidgetsBinding.instance.pointerRouter.removeGlobalRoute(
+      _handlePointerEvent,
+    );
     super.dispose();
   }
 

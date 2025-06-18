@@ -3,7 +3,7 @@ import 'package:flutter_refresh_indicator/flutter_refresh_indicator.dart';
 
 void main() {
   runApp(MainApp());
-} 
+}
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});

@@ -70,6 +70,10 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     return 1 - (widget.fadeCurve.transform(_fadeoutAniamtion?.value ?? 0));
   }
 
+  void _didUpdateState() {
+    if (mounted) setState(() {});
+  }
+
   void _moveTo(double newValue) {
     setState(() {
       _pullingAnimation?.dispose();
@@ -88,7 +92,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
       vsync: this,
       duration: widget.duration,
     );
-    _pullingAnimation!.addListener(() => setState(() {}));
+    _pullingAnimation!.addListener(_didUpdateState);
     _pullingAnimation!.forward();
   }
 
@@ -98,7 +102,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
       vsync: this,
       duration: widget.fadeDuration,
     );
-    _fadeoutAniamtion!.addListener(() => setState(() => {}));
+    _fadeoutAniamtion!.addListener(_didUpdateState);
     _fadeoutAniamtion!.addStatusListener((animStatus) {
       if (animStatus == AnimationStatus.completed) {
         status = ClampingRefreshIndicatorStatus.idle;
@@ -182,7 +186,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
           _animateTo(widget.displacementPercent);
 
           widget.onRefresh().then((value) => _fadeOut());
-        } else {
+        } else if (status != ClampingRefreshIndicatorStatus.idle) {
           status = ClampingRefreshIndicatorStatus.idle;
           _moveTo(fraction);
           _animateTo(0.0);

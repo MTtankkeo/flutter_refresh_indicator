@@ -7,3 +7,6 @@
 ## 1.0.3
 - Added `edgeOffset` option to ClampingRefreshIndicator for customizing the top inset.
 - Renamed `maxDragPercent` to `maxDragDistance` and changed its unit from percentage to pixels in ClampingRefreshIndicator.
+
+## 1.0.4
+- Fixed an issue where unnecessary animations were triggered during PointerUp in ClampingRefreshIndicator.

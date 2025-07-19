@@ -159,6 +159,24 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     return status == ClampingRefreshIndicatorStatus.pulling ? available : 0.0;
   }
 
+  /// Called when the user ends the drag, Starts loading
+  /// if pulled enough, otherwise resets and snaps back.
+  void onPointerEnd(double fraction, PointerEvent event) {
+    if (fraction >= widget.displacementPercent) {
+      Future.microtask(() => status = ClampingRefreshIndicatorStatus.loading);
+      _moveTo(fraction);
+      _animateTo(widget.displacementPercent);
+
+      widget.onRefresh().then((value) => _fadeOut());
+    } else if (status != ClampingRefreshIndicatorStatus.idle) {
+      status = ClampingRefreshIndicatorStatus.idle;
+      _moveTo(fraction);
+      _animateTo(0.0);
+    }
+
+    _isDragging = false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final PrimaryRefreshIndicator? primary = PrimaryRefreshIndicator.maybeOf(
@@ -175,25 +193,9 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
             : distanceFraction;
 
     return GlobalListener(
-      onPointerCancel: (event) => _isDragging = false,
+      onPointerCancel: (event) => onPointerEnd(fraction, event),
       onPointerDown: (event) => _isDragging = true,
-      onPointerUp: (event) {
-        if (fraction >= widget.displacementPercent) {
-          Future.microtask(
-            () => status = ClampingRefreshIndicatorStatus.loading,
-          );
-          _moveTo(fraction);
-          _animateTo(widget.displacementPercent);
-
-          widget.onRefresh().then((value) => _fadeOut());
-        } else if (status != ClampingRefreshIndicatorStatus.idle) {
-          status = ClampingRefreshIndicatorStatus.idle;
-          _moveTo(fraction);
-          _animateTo(0.0);
-        }
-
-        _isDragging = false;
-      },
+      onPointerUp: (event) => onPointerEnd(fraction, event),
       child: ClipRRect(
         child: Stack(
           children: [
@@ -205,6 +207,13 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
                     distanceFraction == 0
                         ? NestedScrollConnectionPropagation.deferToAncestor
                         : NestedScrollConnectionPropagation.selfFirst,
+                predicate: (available, position) {
+                  final bool isPulling =
+                      available < 0 &&
+                      status == ClampingRefreshIndicatorStatus.pulling;
+
+                  return isPulling && distanceFraction != 0;
+                },
                 onPreScroll: _handleNestedScroll,
                 onFling: _handleNestedFling,
                 child: widget.child,

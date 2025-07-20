@@ -203,10 +203,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
               controller: NestedScrollController(),
               scrollDirection: Axis.vertical,
               child: NestedScrollConnection(
-                propagation:
-                    distanceFraction == 0
-                        ? NestedScrollConnectionPropagation.deferToAncestor
-                        : NestedScrollConnectionPropagation.selfFirst,
+                propagation: NestedScrollConnectionPropagation.deferToAncestor,
                 predicate: (available, position) {
                   final bool isPulling =
                       available < 0 &&

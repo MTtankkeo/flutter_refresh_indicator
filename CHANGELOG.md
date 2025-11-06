@@ -23,3 +23,6 @@
 - Renamed the `GlobalListener` class to `RefreshIndicatorListener`.
 
 - Changed the default indicator in the `BouncingRefreshIndicator` widget to `CupertinoActivityIndicator`.
+
+## 1.2.1
+- Bumped the minimum version of the flutter_appbar dependency to 1.7.0.

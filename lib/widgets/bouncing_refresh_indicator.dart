@@ -59,7 +59,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
   BouncingRefreshIndicatorStatus status = BouncingRefreshIndicatorStatus.idle;
   bool _isDragging = false;
 
-  NestedScrollPosition? _cacehdScrollPosition;
+  NestedScrollPosition? _scrollPosition;
 
   AnimationController? _animation;
   final Tween<double> _tween = Tween(begin: 0, end: 0);
@@ -101,7 +101,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
     });
   }
 
-  double _handleNestedScroll(double available, ScrollPosition scroll) {
+  double _handleNestedScroll(double available, NestedScrollPosition scroll) {
     if (status == BouncingRefreshIndicatorStatus.loading) {
       return _appBarController.consumeScroll(
         available,
@@ -148,8 +148,8 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
         _isDragging = false;
 
         if (distanceFraction == 1.0) {
-          _cacehdScrollPosition?.goIdle();
-          _cacehdScrollPosition?.lentPixels = 0.0;
+          _scrollPosition?.goIdle();
+          _scrollPosition?.lentPixels = 0.0;
 
           status = BouncingRefreshIndicatorStatus.loading;
           animateTo(-_appbarPosition.maxExtent);
@@ -218,12 +218,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
                   onPreScroll: _handleNestedScroll,
                   onPostScroll: _handleNestedScroll,
                   onBouncing: (available, position) {
-                    assert(
-                      position is NestedScrollPosition,
-                      "The ScrollController of a Scrollable widget must always be defined as a NestedScrollController.",
-                    );
-
-                    _cacehdScrollPosition = position as NestedScrollPosition;
+                    _scrollPosition = position;
 
                     if (status == BouncingRefreshIndicatorStatus.idle) {
                       final double prvValue = distancePixels;
@@ -237,10 +232,9 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
 
                     return 0.0;
                   },
-                  child: PrimaryScrollController(
-                    controller: NestedScrollController(),
-                    scrollDirection: Axis.vertical,
-                    child: widget.child,
+                  child: NestedScrollControllerScope(
+                    factory: (context) => NestedScrollController(),
+                    builder: (context, _) => widget.child,
                   ),
                 ),
               );

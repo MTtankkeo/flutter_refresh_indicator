@@ -1,18 +1,29 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_appbar/flutter_appbar.dart';
 import 'package:flutter_refresh_indicator/flutter_refresh_indicator.dart';
-import 'package:flutter_refresh_indicator/widgets/global_listener.dart';
+import 'package:flutter_refresh_indicator/widgets/refresh_indicator_listener.dart';
 
+/// Signature for a builder function that creates a widget for a
+/// [ClampingRefreshIndicator] based on the current refresh status.
+typedef ClampingRefreshIndicatorBuilder =
+    Widget Function(
+      ClampingRefreshIndicatorStatus status,
+      double fraction,
+      double fadeFraction,
+      bool isActivable,
+    );
+
+/// Signature for the current status of a [ClampingRefreshIndicator].
+/// Indicates whether the indicator is idle, being pulled, or loading.
 enum ClampingRefreshIndicatorStatus { idle, pulling, loading }
 
 class ClampingRefreshIndicator extends StatefulWidget {
   const ClampingRefreshIndicator({
     super.key,
     required this.onRefresh,
-    this.foregroundColor,
-    this.backgroundColor,
+    this.indicatorBuilder,
     this.maxDragDistance = 250,
     this.displacement = 150,
     this.displacementPercent = 0.5,
@@ -30,8 +41,7 @@ class ClampingRefreshIndicator extends StatefulWidget {
   /// The returned [Future] must complete when the refresh operation is finished.
   final AsyncCallback onRefresh;
 
-  final Color? foregroundColor;
-  final Color? backgroundColor;
+  final ClampingRefreshIndicatorBuilder? indicatorBuilder;
   final double maxDragDistance;
   final double displacement;
   final double displacementPercent;
@@ -179,20 +189,24 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final PrimaryRefreshIndicator? primary = PrimaryRefreshIndicator.maybeOf(
-      context,
-    );
-    final Color? foregroundColor =
-        widget.foregroundColor ?? primary?.clamping?.foregroundColor;
-    final Color? backgroundColor =
-        widget.backgroundColor ?? primary?.clamping?.backgroundColor;
+    final primary = PrimaryRefreshIndicator.maybeOf(context);
 
+    // The builder used to create the refresh indicator widget.
+    final indicatorBuilder =
+        primary?.clampingIndicatorBuilder ?? _defaultIndicatorBuilder;
+
+    // Calculate the fraction for the indicator animation.
+    // Uses an easeOut curve if currently pulling,
+    // otherwise uses the raw distance fraction.
     final fraction =
         status == ClampingRefreshIndicatorStatus.pulling
             ? Curves.easeOut.transform(distanceFraction)
             : distanceFraction;
 
-    return GlobalListener(
+    // Whether the indicator is currently activable.
+    final isActivable = distanceFraction >= widget.displacementPercent;
+
+    return RefreshIndicatorListener(
       onPointerCancel: (event) => onPointerEnd(fraction, event),
       onPointerDown: (event) => _isDragging = true,
       onPointerUp: (event) => onPointerEnd(fraction, event),
@@ -223,12 +237,14 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
                 child: IgnorePointer(
                   child: Align(
                     alignment: Alignment.topCenter,
-                    child: _ProgressIndicator(
-                      fraction: fraction,
-                      fadeFraction: fadeFraction,
-                      status: status,
-                      foregroundColor: foregroundColor,
-                      backgroundColor: backgroundColor,
+                    child: FractionalTranslation(
+                      translation: Offset(0, -1),
+                      child: indicatorBuilder(
+                        status,
+                        fraction,
+                        fadeFraction,
+                        isActivable,
+                      ),
                     ),
                   ),
                 ),
@@ -238,39 +254,25 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
       ),
     );
   }
-}
 
-class _ProgressIndicator extends StatelessWidget {
-  const _ProgressIndicator({
-    required this.fraction,
-    required this.fadeFraction,
-    required this.status,
-    required this.foregroundColor,
-    required this.backgroundColor,
-  });
-
-  final double fraction;
-  final double fadeFraction;
-  final ClampingRefreshIndicatorStatus status;
-  final Color? foregroundColor;
-  final Color? backgroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return FractionalTranslation(
-      translation: Offset(0, -1),
-      child: Transform.scale(
-        scale: fadeFraction,
-        child: Opacity(
-          opacity: fadeFraction,
-          child: RefreshProgressIndicator(
-            value:
-                status == ClampingRefreshIndicatorStatus.pulling
-                    ? fraction * 0.8
-                    : null,
-            color: foregroundColor,
-            backgroundColor: backgroundColor,
-          ),
+  /// The default builder for a clamping-style refresh indicator.
+  /// Displays a [RefreshProgressIndicator] that scales and fades
+  /// based on the current pull progress.
+  static Widget _defaultIndicatorBuilder(
+    ClampingRefreshIndicatorStatus status,
+    double fraction,
+    double fadeFraction,
+    bool isActivable,
+  ) {
+    return Transform.scale(
+      scale: fadeFraction,
+      child: Opacity(
+        opacity: fadeFraction,
+        child: RefreshProgressIndicator(
+          value:
+              status == ClampingRefreshIndicatorStatus.pulling
+                  ? fraction * 0.8
+                  : null,
         ),
       ),
     );

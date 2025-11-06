@@ -1,9 +1,22 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide AppBar;
 import 'package:flutter_appbar/flutter_appbar.dart';
-import 'package:flutter_refresh_indicator/widgets/global_listener.dart';
 import 'package:flutter_refresh_indicator/widgets/primary_refresh_indicator.dart';
+import 'package:flutter_refresh_indicator/widgets/refresh_indicator_listener.dart';
+import 'package:flutter_refresh_indicator/widgets/refresh_indicator_size.dart';
 
+/// Signature for a builder function that creates a widget for a
+/// [BouncingRefreshIndicator] based on the current refresh status.
+typedef BouncingRefreshIndicatorBuilder =
+    Widget Function(
+      BouncingRefreshIndicatorStatus status,
+      double fraction,
+      bool isActive,
+      bool isActivable,
+    );
+
+/// Signature for the current status of a [BouncingRefreshIndicator].
+/// Indicates whether the indicator is idle, loading, or loaded.
 enum BouncingRefreshIndicatorStatus { idle, loading, loaded }
 
 class BouncingRefreshIndicator extends StatefulWidget {
@@ -13,11 +26,8 @@ class BouncingRefreshIndicator extends StatefulWidget {
     this.foregroundColor,
     this.backgroundColor,
     this.displacement = 150,
-    this.displacementPercent = 0.5,
     this.duration = const Duration(milliseconds: 300),
     this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
-    this.fadeDuration = const Duration(milliseconds: 300),
-    this.fadeCurve = Curves.ease,
     required this.child,
   });
 
@@ -30,11 +40,8 @@ class BouncingRefreshIndicator extends StatefulWidget {
   final Color? foregroundColor;
   final Color? backgroundColor;
   final double displacement;
-  final double displacementPercent;
   final Duration duration;
   final Curve curve;
-  final Duration fadeDuration;
-  final Curve fadeCurve;
 
   /// The widget to be contained as descendant by this widget.
   final Widget child;
@@ -46,18 +53,16 @@ class BouncingRefreshIndicator extends StatefulWidget {
 
 class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
     with TickerProviderStateMixin {
+  late final AppBarController _appBarController = AppBarController();
+  late final AppBarPosition _appbarPosition;
+
   BouncingRefreshIndicatorStatus status = BouncingRefreshIndicatorStatus.idle;
   bool _isDragging = false;
 
   NestedScrollPosition? _cacehdScrollPosition;
 
-  late final AppBarController _appBarController = AppBarController();
-  late final AppBarPosition _appbarPosition;
-
   AnimationController? _animation;
   final Tween<double> _tween = Tween(begin: 0, end: 0);
-
-  static double get areaHeight => 50;
 
   double get distancePixels {
     return _tween.transform(widget.curve.transform(_animation?.value ?? 0));
@@ -112,7 +117,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
     return AppBarPosition(
       vsync: this,
       behavior: MaterialAppBarBehavior(alwaysScrolling: false),
-    )..maxExtent = areaHeight;
+    );
   }
 
   @override
@@ -130,26 +135,24 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final PrimaryRefreshIndicator? primary = PrimaryRefreshIndicator.maybeOf(
-      context,
-    );
-    final Color? foregroundColor =
-        widget.foregroundColor ?? primary?.bouncing?.foregroundColor;
-    final Color? backgroundColor =
-        widget.backgroundColor ?? primary?.bouncing?.backgroundColor;
+    final primary = PrimaryRefreshIndicator.maybeOf(context);
 
-    return GlobalListener(
+    // The builder used to create the refresh indicator widget.
+    final indicatorBuilder =
+        primary?.bouncingIndicatorBuilder ?? _defaultIndicatorBuilder;
+
+    return RefreshIndicatorListener(
       onPointerCancel: (event) => _isDragging = false,
       onPointerDown: (event) => _isDragging = true,
       onPointerUp: (event) {
         _isDragging = false;
 
-        if (distanceFraction > widget.displacementPercent) {
+        if (distanceFraction == 1.0) {
           _cacehdScrollPosition?.goIdle();
           _cacehdScrollPosition?.lentPixels = 0.0;
 
           status = BouncingRefreshIndicatorStatus.loading;
-          animateTo(-areaHeight);
+          animateTo(-_appbarPosition.maxExtent);
           widget.onRefresh().then((value) => fadeout());
         }
       },
@@ -166,9 +169,9 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
                   offset: Offset(0, -_appbarPosition.pixels),
                   child: OverflowBox(
                     alignment: Alignment.topCenter,
-                    minWidth: areaHeight,
-                    maxWidth: areaHeight,
-                    minHeight: areaHeight,
+                    minWidth: _appbarPosition.maxExtent,
+                    maxWidth: _appbarPosition.maxExtent,
+                    minHeight: _appbarPosition.maxExtent,
                     maxHeight: double.infinity,
                     child: Builder(
                       builder: (context) {
@@ -179,21 +182,20 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
                         if (isActive) {
                           isActivable = true;
                         } else {
-                          isActivable =
-                              _isDragging &&
-                              distanceFraction > widget.displacementPercent;
+                          isActivable = _isDragging && distanceFraction == 1.0;
                         }
 
-                        return AnimatedOpacity(
-                          opacity: isActivable ? 1.0 : 0.5,
-                          duration: widget.fadeDuration,
-                          curve: widget.curve,
-                          child: RefreshProgressIndicator(
-                            color: foregroundColor,
-                            backgroundColor:
-                                backgroundColor ?? Colors.transparent,
-                            value: isActive ? null : 0.8 * distanceFraction,
-                            elevation: 0,
+                        return RefreshIndicatorSize(
+                          onSize: (newSize) {
+                            setState(() {
+                              _appbarPosition.maxExtent = newSize.height;
+                            });
+                          },
+                          child: indicatorBuilder(
+                            status,
+                            distanceFraction,
+                            isActive,
+                            isActivable,
                           ),
                         );
                       },
@@ -220,6 +222,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
                       position is NestedScrollPosition,
                       "The ScrollController of a Scrollable widget must always be defined as a NestedScrollController.",
                     );
+
                     _cacehdScrollPosition = position as NestedScrollPosition;
 
                     if (status == BouncingRefreshIndicatorStatus.idle) {
@@ -244,6 +247,35 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
             },
           ),
         ],
+      ),
+    );
+  }
+
+  /// The default builder for a bouncing-style refresh indicator.
+  /// Displays a [CupertinoActivityIndicator] that fades and
+  /// updates its visibility based on the pull progress.
+  static Widget _defaultIndicatorBuilder(
+    BouncingRefreshIndicatorStatus status,
+    double fraction,
+    bool isActive,
+    bool isActivable,
+  ) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 15),
+      child: Opacity(
+        opacity: isActive ? 1.0 : fraction,
+        child: Builder(
+          builder: (context) {
+            if (isActivable) {
+              return CupertinoActivityIndicator(radius: 15);
+            }
+
+            return CupertinoActivityIndicator.partiallyRevealed(
+              progress: fraction,
+              radius: 15,
+            );
+          },
+        ),
       ),
     );
   }

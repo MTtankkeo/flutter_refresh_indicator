@@ -4,8 +4,8 @@ This package provides a refresh indicator widget that is far more flexible and n
 ## Preview
 The gif image below may appear distorted and choppy due to compression.
 
-![clamping](https://github.com/user-attachments/assets/e890bacd-5d73-49b4-8456-561df282eba1)
-![bouncing](https://github.com/user-attachments/assets/e2ff15b8-838a-4e43-babf-dca2f0d22841)
+![clamping](https://github.com/MTtankkeo/flutter_refresh_indicator/raw/refs/heads/main/image/clamping_preview.gif)
+![bouncing](https://github.com/MTtankkeo/flutter_refresh_indicator/raw/refs/heads/main/image/bouncing_preview.gif)
 
 ## Usage
 The following explains the basic usage of this package.
@@ -58,11 +58,11 @@ MaterialApp(
 ```
 
 #### Using PrimaryRefreshIndicator widget
-PrimaryRefreshIndicator defines the style of its descendant related refresh indicator widgets, similar to how PrimaryScrollController defines the controller for its descendant widgets.
+PrimaryRefreshIndicator defines the refresh indicator style for its descendant widgets, similar to how PrimaryScrollController provides a scroll controller to its descendants.
 
 ```dart
 PrimaryRefreshIndicator(
-    clamping: RefreshIndicatorStyle(...),
-    bouncing: RefreshIndicatorStyle(...)
+    clampingIndicatorBuilder: (...), // Custom indicator for Clamping
+    bouncingIndicatorBuilder: (...), // Custom indicator for Bouncing
 )
 ```

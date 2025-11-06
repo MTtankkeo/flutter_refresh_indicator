@@ -16,3 +16,10 @@
 - Updated to support flutter_appbar version 1.5.0, which added the NestedScrollConnectionPropagation.directional option.
 
 - Fixed an issue by adding handling for Pointer Cancel events to prevent bugs where the indicator would freeze when gestures are canceled midway.
+
+## 1.2.0
+- Removed the `RefreshIndicatorStyle` class and added support for customizing indicators directly through `ClampingRefreshIndicatorBuilder` and `BouncingRefreshIndicatorBuilder`.
+
+- Renamed the `GlobalListener` class to `RefreshIndicatorListener`.
+
+- Changed the default indicator in the `BouncingRefreshIndicator` widget to `CupertinoActivityIndicator`.

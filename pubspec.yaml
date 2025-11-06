@@ -5,7 +5,7 @@ publisher: ttankkeo112@gmail.com
 repository: https://github.com/MTtankkeo/flutter_refresh_indicator
 
 environment:
-  sdk: ^3.7.0
+  sdk: ">=3.0.0 <4.0.0"
   flutter: ">=1.17.0"
 
 dependencies:

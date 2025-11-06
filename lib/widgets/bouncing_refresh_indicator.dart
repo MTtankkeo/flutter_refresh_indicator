@@ -7,13 +7,12 @@ import 'package:flutter_refresh_indicator/widgets/refresh_indicator_size.dart';
 
 /// Signature for a builder function that creates a widget for a
 /// [BouncingRefreshIndicator] based on the current refresh status.
-typedef BouncingRefreshIndicatorBuilder =
-    Widget Function(
-      BouncingRefreshIndicatorStatus status,
-      double fraction,
-      bool isActive,
-      bool isActivable,
-    );
+typedef BouncingRefreshIndicatorBuilder = Widget Function(
+  BouncingRefreshIndicatorStatus status,
+  double fraction,
+  bool isActive,
+  bool isActivable,
+);
 
 /// Signature for the current status of a [BouncingRefreshIndicator].
 /// Indicates whether the indicator is idle, loading, or loaded.
@@ -23,9 +22,7 @@ class BouncingRefreshIndicator extends StatefulWidget {
   const BouncingRefreshIndicator({
     super.key,
     required this.onRefresh,
-    this.foregroundColor,
-    this.backgroundColor,
-    this.displacement = 150,
+    this.displacement = 120,
     this.duration = const Duration(milliseconds: 300),
     this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
     required this.child,
@@ -37,8 +34,6 @@ class BouncingRefreshIndicator extends StatefulWidget {
   /// The returned [Future] must complete when the refresh operation is finished.
   final AsyncCallback onRefresh;
 
-  final Color? foregroundColor;
-  final Color? backgroundColor;
   final double displacement;
   final Duration duration;
   final Curve curve;

@@ -43,8 +43,7 @@ class _RefreshIndicatorState extends State<RefreshIndicator> {
 
   @override
   Widget build(BuildContext context) {
-    final RefreshIndicatorType current =
-        widget.type ??
+    final RefreshIndicatorType current = widget.type ??
         (isBouncing
             ? RefreshIndicatorType.bouncing
             : RefreshIndicatorType.clamping);

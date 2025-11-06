@@ -26,3 +26,6 @@
 
 ## 1.2.1
 - Bumped the minimum version of the flutter_appbar dependency to 1.7.0.
+
+## 1.2.2
+- Lowered the default value of displacement in `BouncingRefreshIndicator` from 150 to 120.

@@ -29,3 +29,6 @@
 
 ## 1.2.2
 - Lowered the default value of displacement in `BouncingRefreshIndicator` from 150 to 120.
+
+## 1.2.3
+- Updated ClampingRefreshIndicator widget to use NestedScrollControllerScope instead of PrimaryScrollController

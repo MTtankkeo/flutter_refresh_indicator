@@ -211,20 +211,19 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
       child: ClipRRect(
         child: Stack(
           children: [
-            PrimaryScrollController(
-              controller: NestedScrollController(),
-              scrollDirection: Axis.vertical,
-              child: NestedScrollConnection(
-                propagation: NestedScrollConnectionPropagation.deferToAncestor,
-                predicate: (available, position) {
-                  final bool isPulling = available < 0 &&
-                      status == ClampingRefreshIndicatorStatus.pulling;
+            NestedScrollConnection(
+              propagation: NestedScrollConnectionPropagation.deferToAncestor,
+              predicate: (available, position) {
+                final bool isPulling = available < 0 &&
+                    status == ClampingRefreshIndicatorStatus.pulling;
 
-                  return isPulling && distanceFraction != 0;
-                },
-                onPreScroll: _handleNestedScroll,
-                onFling: _handleNestedFling,
-                child: widget.child,
+                return isPulling && distanceFraction != 0;
+              },
+              onPreScroll: _handleNestedScroll,
+              onFling: _handleNestedFling,
+              child: NestedScrollControllerScope(
+                factory: (context) => NestedScrollController(),
+                builder: (context, _) => widget.child,
               ),
             ),
             if (fraction != 0.0)

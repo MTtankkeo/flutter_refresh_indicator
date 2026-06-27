@@ -23,8 +23,8 @@ class BouncingRefreshIndicator extends StatefulWidget {
     super.key,
     required this.onRefresh,
     this.displacement = 120,
-    this.duration = const Duration(milliseconds: 300),
-    this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
+    this.physics,
+    this.enabled = true,
     required this.child,
   });
 
@@ -34,20 +34,24 @@ class BouncingRefreshIndicator extends StatefulWidget {
   /// The returned [Future] must complete when the refresh operation is finished.
   final AsyncCallback onRefresh;
 
+  /// The minimum drag distance required to trigger the [onRefresh] callback.
   final double displacement;
-  final Duration duration;
-  final Curve curve;
+
+  /// The scroll physics that determine the spring behavior
+  /// when pulling or releasing the indicator for refresh.
+  final ScrollPhysics? physics;
+
+  /// Whether users can pull to trigger the refresh operation.
+  final bool enabled;
 
   /// The widget to be contained as descendant by this widget.
   final Widget child;
 
   @override
-  State<BouncingRefreshIndicator> createState() =>
-      _BouncingRefreshIndicatorState();
+  State<BouncingRefreshIndicator> createState() => _BouncingRefreshIndicatorState();
 }
 
-class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
-    with TickerProviderStateMixin {
+class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> with TickerProviderStateMixin {
   late final AppBarController _appBarController = AppBarController();
   late final AppBarPosition _appbarPosition;
 
@@ -55,47 +59,116 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
   bool _isDragging = false;
 
   NestedScrollPosition? _scrollPosition;
-
   AnimationController? _animation;
-  final Tween<double> _tween = Tween(begin: 0, end: 0);
+  double _distancePixels = 0.0;
+
+  ScrollPhysics get physics {
+    return widget.physics ?? _scrollPosition?.physics ?? const BouncingScrollPhysics();
+  }
 
   double get distancePixels {
-    return _tween.transform(widget.curve.transform(_animation?.value ?? 0));
+    return _animation?.value ?? _distancePixels;
   }
 
   double get distanceFraction {
     return (-distancePixels / widget.displacement).clamp(0, 1);
   }
 
+  double get _defaultViewportDimension => MediaQuery.of(context).size.height;
+  double get _defaultDevicePixelRatio => MediaQuery.of(context).devicePixelRatio;
+
+  /// Disposes of the active animation controller and clears its reference.
+  void _disposeAnimation() {
+    _animation?.dispose();
+    _animation = null;
+  }
+
+  /// Triggers a widget rebuild by calling [setState] if the widget is currently mounted.
+  void _didUpdateState() {
+    if (mounted) setState(() {});
+  }
+
+  /// Instantly moves to the [newValue] position by canceling
+  /// any active animation and updating the distance state.
   void moveTo(double newValue) {
     setState(() {
-      _animation?.dispose();
-      _animation = null;
-      _tween.begin = newValue;
-      _tween.end = newValue;
+      _disposeAnimation();
+      _distancePixels = newValue;
     });
   }
 
-  void animateTo(double newValue) {
-    _tween.begin = distancePixels;
-    _tween.end = newValue;
-    _animation?.dispose();
-    _animation = AnimationController(vsync: this, duration: widget.duration);
-    _animation!.addListener(() => setState(() {}));
-    _animation!.forward();
+  /// Animates the distance to [newValue] using a physics-based
+  /// simulation(spring) and returns the [AnimationController].
+  AnimationController? animateTo(double newValue) {
+    final double oldValue = distancePixels;
+    const double velocity = 0.0;
+
+    if (oldValue == newValue) {
+      moveTo(newValue);
+      return null;
+    }
+
+    final ScrollMetrics metrics = FixedScrollMetrics(
+      minScrollExtent: newValue,
+      maxScrollExtent: newValue,
+      pixels: oldValue,
+      viewportDimension: _scrollPosition?.viewportDimension ?? _defaultViewportDimension,
+      devicePixelRatio: _scrollPosition?.devicePixelRatio ?? _defaultDevicePixelRatio,
+      axisDirection: _scrollPosition?.axisDirection ?? AxisDirection.down,
+    );
+
+    Simulation? simulation = physics.createBallisticSimulation(metrics, velocity);
+
+    simulation ??= ScrollSpringSimulation(
+      physics.spring,
+      oldValue,
+      newValue,
+      velocity,
+      tolerance: physics.toleranceFor(metrics),
+    );
+
+    _disposeAnimation();
+    final controller = AnimationController.unbounded(
+      value: oldValue,
+      vsync: this,
+    );
+
+    _animation = controller;
+    controller.addListener(_didUpdateState);
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _distancePixels = newValue;
+        _animation = null;
+        _didUpdateState();
+        Future.microtask(controller.dispose);
+      }
+    });
+
+    return controller..animateWith(simulation);
   }
 
+  /// Fades out the indicator by animating back to 0,
+  /// resetting the status and app bar position upon completion.
   void fadeout() {
-    animateTo(0);
+    final animation = animateTo(0);
     status = BouncingRefreshIndicatorStatus.loaded;
 
-    _animation!.addStatusListener((animStatus) {
-      if (animStatus != AnimationStatus.completed) return;
+    void complete() {
       status = BouncingRefreshIndicatorStatus.idle;
       _appbarPosition.setPixels(0);
+    }
+
+    if (animation == null) {
+      return complete();
+    }
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed) complete();
     });
   }
 
+  /// Handles nested scrolling by allowing the app bar to consume the available
+  /// scroll distance only when the indicator is in the loading state.
   double _handleNestedScroll(double available, NestedScrollPosition scroll) {
     if (status == BouncingRefreshIndicatorStatus.loading) {
       return _appBarController.consumeScroll(
@@ -108,6 +181,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
     return 0.0;
   }
 
+  /// Creates and configures an [AppBarPosition] instance for nested scroll.
   AppBarPosition createAppBarPosition() {
     return AppBarPosition(
       vsync: this,
@@ -124,7 +198,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
   @override
   void dispose() {
     _appBarController.dispose();
-    _animation?.dispose();
+    _disposeAnimation();
     super.dispose();
   }
 
@@ -133,8 +207,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
     final primary = PrimaryRefreshIndicator.maybeOf(context);
 
     // The builder used to create the refresh indicator widget.
-    final indicatorBuilder =
-        primary?.bouncingIndicatorBuilder ?? _defaultIndicatorBuilder;
+    final indicatorBuilder = primary?.bouncingIndicatorBuilder ?? _defaultIndicatorBuilder;
 
     return RefreshIndicatorListener(
       onPointerCancel: (event) => _isDragging = false,
@@ -171,8 +244,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
                     child: Builder(
                       builder: (context) {
                         final bool isActivable;
-                        final bool isActive =
-                            status != BouncingRefreshIndicatorStatus.idle;
+                        final bool isActive = status != BouncingRefreshIndicatorStatus.idle;
 
                         if (isActive) {
                           isActivable = true;
@@ -215,12 +287,9 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator>
                   onBouncing: (available, position) {
                     _scrollPosition = position;
 
-                    if (status == BouncingRefreshIndicatorStatus.idle) {
+                    if (widget.enabled && status == BouncingRefreshIndicatorStatus.idle) {
                       final double prvValue = distancePixels;
-                      final double newValue = (prvValue + available).clamp(
-                        -double.infinity,
-                        0,
-                      );
+                      final double newValue = (prvValue + available).clamp(-double.infinity, 0);
                       moveTo(newValue);
                       return newValue - prvValue;
                     }

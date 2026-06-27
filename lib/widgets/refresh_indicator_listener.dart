@@ -23,8 +23,7 @@ class RefreshIndicatorListener extends StatefulWidget {
   final Widget child;
 
   @override
-  State<RefreshIndicatorListener> createState() =>
-      _RefreshIndicatorListenerState();
+  State<RefreshIndicatorListener> createState() => _RefreshIndicatorListenerState();
 }
 
 class _RefreshIndicatorListenerState extends State<RefreshIndicatorListener> {

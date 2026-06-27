@@ -26,7 +26,6 @@ class PrimaryRefreshIndicator extends InheritedWidget {
   /// Finds the [PrimaryRefreshIndicator] from the closest instanc
   /// of this class that encloses the given context.
   static PrimaryRefreshIndicator? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<PrimaryRefreshIndicator>();
+    return context.dependOnInheritedWidgetOfExactType<PrimaryRefreshIndicator>();
   }
 }

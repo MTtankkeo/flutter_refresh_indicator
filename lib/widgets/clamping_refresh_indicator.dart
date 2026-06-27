@@ -31,6 +31,7 @@ class ClampingRefreshIndicator extends StatefulWidget {
     this.curve = const Cubic(0.4, 0.0, 0.2, 1.0),
     this.fadeDuration = const Duration(milliseconds: 150),
     this.fadeCurve = Curves.easeOutQuad,
+    this.enabled = true,
     required this.child,
   });
 
@@ -50,16 +51,17 @@ class ClampingRefreshIndicator extends StatefulWidget {
   final Duration fadeDuration;
   final Curve fadeCurve;
 
+  /// Whether users can pull to trigger the refresh operation.
+  final bool enabled;
+
   /// The widget to be contained as descendant by this widget.
   final Widget child;
 
   @override
-  State<ClampingRefreshIndicator> createState() =>
-      _ClampingRefreshIndicatorState();
+  State<ClampingRefreshIndicator> createState() => _ClampingRefreshIndicatorState();
 }
 
-class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
-    with TickerProviderStateMixin {
+class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> with TickerProviderStateMixin {
   ClampingRefreshIndicatorStatus status = ClampingRefreshIndicatorStatus.idle;
   bool _isDragging = false;
 
@@ -79,10 +81,13 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     return 1 - (widget.fadeCurve.transform(_fadeoutAniamtion?.value ?? 0));
   }
 
+  /// Triggers a widget rebuild by calling [setState] if the widget is currently mounted.
   void _didUpdateState() {
     if (mounted) setState(() {});
   }
 
+  /// Instantly moves the indicator to [newValue] by stopping
+  /// any active pulling animation and resetting the tween range.
   void _moveTo(double newValue) {
     setState(() {
       _pullingAnimation?.dispose();
@@ -92,6 +97,8 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     });
   }
 
+  /// Animates the indicator from its current fraction
+  /// to [newValue] using a new [AnimationController].
   void _animateTo(double newValue) {
     _pullingTween.begin = distanceFraction;
     _pullingTween.end = newValue;
@@ -105,6 +112,8 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     _pullingAnimation!.forward();
   }
 
+  /// Starts the fade-out animation and resets the status
+  /// to idle once the animation completes.
   void _animateFadeOut() {
     _fadeoutAniamtion?.dispose();
     _fadeoutAniamtion = AnimationController(
@@ -122,6 +131,8 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     _fadeoutAniamtion!.forward();
   }
 
+  /// Initiates the fade-out process, waiting for the active pulling
+  /// animation to finish first if it is currently running.
   void _fadeOut() {
     if (_pullingAnimation?.isAnimating ?? false) {
       // Waits until the pull animation is finished if it's currently running.
@@ -142,23 +153,23 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     super.dispose();
   }
 
+  /// Handles nested scroll events to update the pull distance
+  /// and transition the status to pulling when appropriate.
   double _handleNestedScroll(double available, ScrollPosition position) {
-    if (status == ClampingRefreshIndicatorStatus.loading ||
-        position.pixels != 0.0 ||
-        !_isDragging) {
+    // If the indicator is disabled, loading, not at the top,
+    // or not being dragged, ignore the scroll event.
+    if (status == ClampingRefreshIndicatorStatus.loading || position.pixels != 0.0 || !_isDragging) {
       return 0.0;
     }
 
-    if (_isDragging &&
-        position.userScrollDirection == ScrollDirection.forward) {
+    // Update the status to pulling if the user is actively dragging downward.
+    if (_isDragging && position.userScrollDirection == ScrollDirection.forward) {
       status = ClampingRefreshIndicatorStatus.pulling;
     }
 
+    // Calculate the new drag fraction based on the available scroll delta.
     final double factor = widget.maxDragDistance;
-    final double newValue = (distanceFraction + (available / factor)).clamp(
-      0.0,
-      1.0,
-    );
+    final double newValue = (distanceFraction + (available / factor)).clamp(0.0, 1.0);
     setState(() => _moveTo(newValue));
 
     return newValue == 0.0 ? 0.0 : available;
@@ -186,13 +197,17 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     _isDragging = false;
   }
 
+  /// Called when the user starts the drag.
+  void onPointerDown(PointerDownEvent event) {
+    if (widget.enabled) _isDragging = true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = PrimaryRefreshIndicator.maybeOf(context);
 
     // The builder used to create the refresh indicator widget.
-    final indicatorBuilder =
-        primary?.clampingIndicatorBuilder ?? _defaultIndicatorBuilder;
+    final indicatorBuilder = primary?.clampingIndicatorBuilder ?? _defaultIndicatorBuilder;
 
     // Calculate the fraction for the indicator animation.
     // Uses an easeOut curve if currently pulling,
@@ -205,17 +220,16 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
     final isActivable = distanceFraction >= widget.displacementPercent;
 
     return RefreshIndicatorListener(
-      onPointerCancel: (event) => onPointerEnd(fraction, event),
-      onPointerDown: (event) => _isDragging = true,
+      onPointerDown: onPointerDown,
       onPointerUp: (event) => onPointerEnd(fraction, event),
+      onPointerCancel: (event) => onPointerEnd(fraction, event),
       child: ClipRRect(
         child: Stack(
           children: [
             NestedScrollConnection(
               propagation: NestedScrollConnectionPropagation.deferToAncestor,
               predicate: (available, position) {
-                final bool isPulling = available < 0 &&
-                    status == ClampingRefreshIndicatorStatus.pulling;
+                final bool isPulling = available < 0 && status == ClampingRefreshIndicatorStatus.pulling;
 
                 return isPulling && distanceFraction != 0;
               },
@@ -264,9 +278,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator>
       child: Opacity(
         opacity: fadeFraction,
         child: RefreshProgressIndicator(
-          value: status == ClampingRefreshIndicatorStatus.pulling
-              ? fraction * 0.8
-              : null,
+          value: status == ClampingRefreshIndicatorStatus.pulling ? fraction * 0.8 : null,
         ),
       ),
     );

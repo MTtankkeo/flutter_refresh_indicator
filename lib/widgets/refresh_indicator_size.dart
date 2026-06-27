@@ -29,8 +29,7 @@ class _RefreshIndicatorSizeState extends State<RefreshIndicatorSize> {
 
     // Schedule a callback after the first frame to measure the child's size.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final renderbox =
-          _globalKey.currentContext?.findRenderObject() as RenderBox;
+      final renderbox = _globalKey.currentContext?.findRenderObject() as RenderBox;
       assert(renderbox.hasSize);
       widget.onSize(renderbox.size);
     });

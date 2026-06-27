@@ -32,3 +32,12 @@
 
 ## 1.2.3
 - Updated ClampingRefreshIndicator widget to use NestedScrollControllerScope instead of PrimaryScrollController
+
+## 1.3.0
+- Replaced `Duration` and `Curve`-based animations in `BouncingRefreshIndicator` with `ScrollPhysics`-based ballistic and spring simulations.
+
+- Added `enabled` option to both `ClampingRefreshIndicator` and `BouncingRefreshIndicator` to allow toggling the refresh functionality dynamically.
+
+- Fixed a layout freezing issue by ensuring that `widget.enabled` is also verified during nested scroll physics and pointer events.
+
+- Added comprehensive documentation and code comments for internal animation and nested scroll handlers.

@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 
 /// A widget that measures the size of its [child] after layout
 /// and reports it through the [onSize] callback.
-class RefreshIndicatorSize extends StatefulWidget {
-  const RefreshIndicatorSize({
+class SizeReporter extends StatefulWidget {
+  const SizeReporter({
     super.key,
     required this.onSize,
     required this.child,
@@ -17,11 +17,11 @@ class RefreshIndicatorSize extends StatefulWidget {
   final Widget child;
 
   @override
-  State<RefreshIndicatorSize> createState() => _RefreshIndicatorSizeState();
+  State<SizeReporter> createState() => _SizeReporterState();
 }
 
-class _RefreshIndicatorSizeState extends State<RefreshIndicatorSize> {
-  final GlobalKey _globalKey = GlobalKey();
+class _SizeReporterState extends State<SizeReporter> {
+  final _globalKey = GlobalKey();
 
   @override
   void initState() {
@@ -31,6 +31,7 @@ class _RefreshIndicatorSizeState extends State<RefreshIndicatorSize> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final renderbox = _globalKey.currentContext?.findRenderObject() as RenderBox;
       assert(renderbox.hasSize);
+
       widget.onSize(renderbox.size);
     });
   }

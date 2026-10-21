@@ -6,8 +6,8 @@ import 'package:flutter/widgets.dart';
 /// Typically used internally by refresh indicators to detect
 /// user interactions like pull gestures or pointer releases.
 @protected
-class RefreshIndicatorListener extends StatefulWidget {
-  const RefreshIndicatorListener({
+class GlobalPointerListener extends StatefulWidget {
+  const GlobalPointerListener({
     super.key,
     this.onPointerDown,
     this.onPointerMove,
@@ -23,10 +23,10 @@ class RefreshIndicatorListener extends StatefulWidget {
   final Widget child;
 
   @override
-  State<RefreshIndicatorListener> createState() => _RefreshIndicatorListenerState();
+  State<GlobalPointerListener> createState() => _GlobalPointerListenerState();
 }
 
-class _RefreshIndicatorListenerState extends State<RefreshIndicatorListener> {
+class _GlobalPointerListenerState extends State<GlobalPointerListener> {
   @override
   void initState() {
     super.initState();
@@ -35,9 +35,7 @@ class _RefreshIndicatorListenerState extends State<RefreshIndicatorListener> {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.pointerRouter.removeGlobalRoute(
-      _handlePointerEvent,
-    );
+    WidgetsBinding.instance.pointerRouter.removeGlobalRoute(_handlePointerEvent);
     super.dispose();
   }
 
@@ -54,7 +52,5 @@ class _RefreshIndicatorListenerState extends State<RefreshIndicatorListener> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return widget.child;
-  }
+  Widget build(BuildContext context) => widget.child;
 }

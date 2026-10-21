@@ -1,18 +1,21 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_appbar/flutter_appbar.dart';
+import 'package:flutter_nested_scroll/flutter_nested_scroll.dart';
 import 'package:flutter_refresh_indicator/widgets/primary_refresh_indicator.dart';
-import 'package:flutter_refresh_indicator/widgets/refresh_indicator_listener.dart';
-import 'package:flutter_refresh_indicator/widgets/refresh_indicator_size.dart';
+import 'package:flutter_refresh_indicator/widgets/global_pointer_listener.dart';
+import 'package:flutter_refresh_indicator/widgets/size_reporter.dart';
 
 /// Signature for a builder function that creates a widget for a
 /// [BouncingRefreshIndicator] based on the current refresh status.
-typedef BouncingRefreshIndicatorBuilder = Widget Function(
-  BouncingRefreshIndicatorStatus status,
-  double fraction,
-  bool isActive,
-  bool isActivable,
-);
+typedef BouncingRefreshIndicatorBuilder =
+    Widget Function(
+      BouncingRefreshIndicatorStatus status,
+      double fraction,
+      bool isActive,
+      bool isActivable,
+    );
 
 /// Signature for the current status of a [BouncingRefreshIndicator].
 /// Indicates whether the indicator is idle, loading, or loaded.
@@ -52,10 +55,13 @@ class BouncingRefreshIndicator extends StatefulWidget {
 }
 
 class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> with TickerProviderStateMixin {
-  late final AppBarController _appBarController = AppBarController();
-  late final AppBarPosition _appbarPosition;
+  /// The collapsed fraction of the indicator while refreshing.
+  final _collapseFraction = ValueNotifier<double>(0.0);
+  double _indicatorExtent = 0.0;
 
-  BouncingRefreshIndicatorStatus status = BouncingRefreshIndicatorStatus.idle;
+  double get _indicatorPixels => _indicatorExtent * _collapseFraction.value;
+
+  BouncingRefreshIndicatorStatus status = .idle;
   bool _isDragging = false;
 
   NestedScrollPosition? _scrollPosition;
@@ -114,7 +120,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
       pixels: oldValue,
       viewportDimension: _scrollPosition?.viewportDimension ?? _defaultViewportDimension,
       devicePixelRatio: _scrollPosition?.devicePixelRatio ?? _defaultDevicePixelRatio,
-      axisDirection: _scrollPosition?.axisDirection ?? AxisDirection.down,
+      axisDirection: _scrollPosition?.axisDirection ?? .down,
     );
 
     Simulation? simulation = physics.createBallisticSimulation(metrics, velocity);
@@ -128,15 +134,12 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
     );
 
     _disposeAnimation();
-    final controller = AnimationController.unbounded(
-      value: oldValue,
-      vsync: this,
-    );
+    final controller = AnimationController.unbounded(value: oldValue, vsync: this);
 
     _animation = controller;
     controller.addListener(_didUpdateState);
     controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
+      if (status == .completed) {
         _distancePixels = newValue;
         _animation = null;
         _didUpdateState();
@@ -148,14 +151,14 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
   }
 
   /// Fades out the indicator by animating back to 0,
-  /// resetting the status and app bar position upon completion.
+  /// resetting the status and collapsed fraction upon completion.
   void fadeout() {
     final animation = animateTo(0);
-    status = BouncingRefreshIndicatorStatus.loaded;
+    status = .loaded;
 
     void complete() {
-      status = BouncingRefreshIndicatorStatus.idle;
-      _appbarPosition.setPixels(0);
+      status = .idle;
+      _collapseFraction.value = 0;
     }
 
     if (animation == null) {
@@ -163,41 +166,51 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
     }
 
     animation.addStatusListener((status) {
-      if (status == AnimationStatus.completed) complete();
+      if (status == .completed) complete();
     });
   }
 
-  /// Handles nested scrolling by allowing the app bar to consume the available
-  /// scroll distance only when the indicator is in the loading state.
+  /// Collapses or expands the loading indicator before passing remaining
+  /// scroll distance to the content, matching the previous app bar behavior.
   double _handleNestedScroll(double available, NestedScrollPosition scroll) {
-    if (status == BouncingRefreshIndicatorStatus.loading) {
-      return _appBarController.consumeScroll(
-        available,
-        scroll,
-        AppbarPropagation.next,
+    if (status != .loading || _indicatorExtent == 0.0) {
+      return 0.0;
+    }
+
+    // Only consume normal scrolling at the leading edge of scrollable content.
+    if (scroll.totalPixels < scroll.minScrollExtent || scroll.totalPixels > scroll.maxScrollExtent) {
+      return 0.0;
+    }
+
+    if (scroll.pixels > precisionErrorTolerance) {
+      return 0.0;
+    }
+
+    if (_indicatorExtent > scroll.maxScrollExtent + _indicatorPixels) {
+      return 0.0;
+    }
+
+    final oldPixels = _indicatorPixels;
+    _collapseFraction.value = ((oldPixels - available) / _indicatorExtent).clamp(0.0, 1.0);
+    final consumed = oldPixels - _indicatorPixels;
+
+    // The translated content changes the scroll range by the consumed distance.
+    if (consumed.abs() > precisionErrorTolerance) {
+      scroll.applyContentDimensions(
+        scroll.minScrollExtent,
+        max(
+          scroll.minScrollExtent,
+          scroll.maxScrollExtent + consumed,
+        ),
       );
     }
 
-    return 0.0;
-  }
-
-  /// Creates and configures an [AppBarPosition] instance for nested scroll.
-  AppBarPosition createAppBarPosition() {
-    return AppBarPosition(
-      vsync: this,
-      behavior: MaterialAppBarBehavior(alwaysScrolling: false),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _appBarController.attach(_appbarPosition = createAppBarPosition());
+    return consumed;
   }
 
   @override
   void dispose() {
-    _appBarController.dispose();
+    _collapseFraction.dispose();
     _disposeAnimation();
     super.dispose();
   }
@@ -209,7 +222,7 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
     // The builder used to create the refresh indicator widget.
     final indicatorBuilder = primary?.bouncingIndicatorBuilder ?? _defaultIndicatorBuilder;
 
-    return RefreshIndicatorListener(
+    return GlobalPointerListener(
       onPointerCancel: (event) => _isDragging = false,
       onPointerDown: (event) => _isDragging = true,
       onPointerUp: (event) {
@@ -219,32 +232,32 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
           _scrollPosition?.goIdle();
           _scrollPosition?.lentPixels = 0.0;
 
-          status = BouncingRefreshIndicatorStatus.loading;
-          animateTo(-_appbarPosition.maxExtent);
+          status = .loading;
+          animateTo(-_indicatorExtent);
           widget.onRefresh().then((value) => fadeout());
         }
       },
       child: Stack(
         children: [
           AnimatedBuilder(
-            animation: _appbarPosition,
+            animation: _collapseFraction,
             builder: (context, child) {
               return Container(
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(),
                 height: distancePixels.abs(),
                 child: Transform.translate(
-                  offset: Offset(0, -_appbarPosition.pixels),
+                  offset: Offset(0, -_indicatorPixels),
                   child: OverflowBox(
                     alignment: Alignment.topCenter,
-                    minWidth: _appbarPosition.maxExtent,
-                    maxWidth: _appbarPosition.maxExtent,
-                    minHeight: _appbarPosition.maxExtent,
+                    minWidth: _indicatorExtent,
+                    maxWidth: _indicatorExtent,
+                    minHeight: _indicatorExtent,
                     maxHeight: double.infinity,
                     child: Builder(
                       builder: (context) {
                         final bool isActivable;
-                        final bool isActive = status != BouncingRefreshIndicatorStatus.idle;
+                        final bool isActive = status != .idle;
 
                         if (isActive) {
                           isActivable = true;
@@ -252,11 +265,9 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
                           isActivable = _isDragging && distanceFraction == 1.0;
                         }
 
-                        return RefreshIndicatorSize(
+                        return SizeReporter(
                           onSize: (newSize) {
-                            setState(() {
-                              _appbarPosition.maxExtent = newSize.height;
-                            });
+                            setState(() => _indicatorExtent = newSize.height);
                           },
                           child: indicatorBuilder(
                             status,
@@ -273,10 +284,9 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
             },
           ),
           AnimatedBuilder(
-            animation: _appbarPosition,
+            animation: _collapseFraction,
             builder: (context, child) {
-              final Offset appbar = Offset(0, _appbarPosition.expandedPercent);
-              final Offset offset = Offset(0, -distancePixels * appbar.dy);
+              final Offset offset = Offset(0, -distancePixels * (1 - _collapseFraction.value));
 
               return Transform.translate(
                 transformHitTests: false,
@@ -319,20 +329,24 @@ class _BouncingRefreshIndicatorState extends State<BouncingRefreshIndicator> wit
     bool isActivable,
   ) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 15),
+      padding: .symmetric(vertical: 15),
       child: Opacity(
         opacity: isActive ? 1.0 : fraction,
-        child: Builder(
-          builder: (context) {
-            if (isActivable) {
-              return CupertinoActivityIndicator(radius: 15);
-            }
+        child: AnimatedSwitcher(
+          duration: .new(milliseconds: 300),
+          child: Builder(
+            key: ValueKey(isActivable),
+            builder: (context) {
+              if (isActivable) {
+                return CupertinoActivityIndicator(radius: 15);
+              }
 
-            return CupertinoActivityIndicator.partiallyRevealed(
-              progress: fraction,
-              radius: 15,
-            );
-          },
+              return CupertinoActivityIndicator.partiallyRevealed(
+                progress: fraction,
+                radius: 15,
+              );
+            },
+          ),
         ),
       ),
     );

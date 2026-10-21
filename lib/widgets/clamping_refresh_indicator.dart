@@ -1,18 +1,18 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_appbar/flutter_appbar.dart';
+import 'package:flutter_nested_scroll/flutter_nested_scroll.dart';
 import 'package:flutter_refresh_indicator/flutter_refresh_indicator.dart';
-import 'package:flutter_refresh_indicator/widgets/refresh_indicator_listener.dart';
+import 'package:flutter_refresh_indicator/widgets/global_pointer_listener.dart';
 
 /// Signature for a builder function that creates a widget for a
 /// [ClampingRefreshIndicator] based on the current refresh status.
-typedef ClampingRefreshIndicatorBuilder = Widget Function(
-  ClampingRefreshIndicatorStatus status,
-  double fraction,
-  double fadeFraction,
-  bool isActivable,
-);
+typedef ClampingRefreshIndicatorBuilder =
+    Widget Function(
+      ClampingRefreshIndicatorStatus status,
+      double fraction,
+      double fadeFraction,
+      bool isActivable,
+    );
 
 /// Signature for the current status of a [ClampingRefreshIndicator].
 /// Indicates whether the indicator is idle, being pulled, or loading.
@@ -62,10 +62,11 @@ class ClampingRefreshIndicator extends StatefulWidget {
 }
 
 class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> with TickerProviderStateMixin {
-  ClampingRefreshIndicatorStatus status = ClampingRefreshIndicatorStatus.idle;
+  ClampingRefreshIndicatorStatus status = .idle;
+
   bool _isDragging = false;
 
-  bool get isRefreshing => status == ClampingRefreshIndicatorStatus.loading;
+  bool get isRefreshing => status == .loading;
 
   AnimationController? _fadeoutAniamtion;
   AnimationController? _pullingAnimation;
@@ -122,8 +123,8 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
     );
     _fadeoutAniamtion!.addListener(_didUpdateState);
     _fadeoutAniamtion!.addStatusListener((animStatus) {
-      if (animStatus == AnimationStatus.completed) {
-        status = ClampingRefreshIndicatorStatus.idle;
+      if (animStatus == .completed) {
+        status = .idle;
         _fadeoutAniamtion = null;
         _moveTo(0.0);
       }
@@ -158,13 +159,13 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
   double _handleNestedScroll(double available, ScrollPosition position) {
     // If the indicator is disabled, loading, not at the top,
     // or not being dragged, ignore the scroll event.
-    if (status == ClampingRefreshIndicatorStatus.loading || position.pixels != 0.0 || !_isDragging) {
+    if (status == .loading || position.pixels != 0.0 || !_isDragging) {
       return 0.0;
     }
 
     // Update the status to pulling if the user is actively dragging downward.
-    if (_isDragging && position.userScrollDirection == ScrollDirection.forward) {
-      status = ClampingRefreshIndicatorStatus.pulling;
+    if (_isDragging && position.userScrollDirection == .forward) {
+      status = .pulling;
     }
 
     // Calculate the new drag fraction based on the available scroll delta.
@@ -176,20 +177,20 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
   }
 
   double _handleNestedFling(double available, ScrollPosition position) {
-    return status == ClampingRefreshIndicatorStatus.pulling ? available : 0.0;
+    return status == .pulling ? available : 0.0;
   }
 
   /// Called when the user ends the drag, Starts loading
   /// if pulled enough, otherwise resets and snaps back.
   void onPointerEnd(double fraction, PointerEvent event) {
     if (fraction >= widget.displacementPercent) {
-      Future.microtask(() => status = ClampingRefreshIndicatorStatus.loading);
+      Future.microtask(() => status = .loading);
       _moveTo(fraction);
       _animateTo(widget.displacementPercent);
 
       widget.onRefresh().then((value) => _fadeOut());
-    } else if (status != ClampingRefreshIndicatorStatus.idle) {
-      status = ClampingRefreshIndicatorStatus.idle;
+    } else if (status != .idle) {
+      status = .idle;
       _moveTo(fraction);
       _animateTo(0.0);
     }
@@ -212,14 +213,12 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
     // Calculate the fraction for the indicator animation.
     // Uses an easeOut curve if currently pulling,
     // otherwise uses the raw distance fraction.
-    final fraction = status == ClampingRefreshIndicatorStatus.pulling
-        ? Curves.easeOut.transform(distanceFraction)
-        : distanceFraction;
+    final fraction = status == .pulling ? Curves.easeOut.transform(distanceFraction) : distanceFraction;
 
     // Whether the indicator is currently activable.
     final isActivable = distanceFraction >= widget.displacementPercent;
 
-    return RefreshIndicatorListener(
+    return GlobalPointerListener(
       onPointerDown: onPointerDown,
       onPointerUp: (event) => onPointerEnd(fraction, event),
       onPointerCancel: (event) => onPointerEnd(fraction, event),
@@ -227,9 +226,9 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
         child: Stack(
           children: [
             NestedScrollConnection(
-              propagation: NestedScrollConnectionPropagation.deferToAncestor,
+              propagation: .deferToAncestor,
               predicate: (available, position) {
-                final bool isPulling = available < 0 && status == ClampingRefreshIndicatorStatus.pulling;
+                final bool isPulling = available < 0 && status == .pulling;
 
                 return isPulling && distanceFraction != 0;
               },
@@ -245,7 +244,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
                 top: (widget.displacement * fraction) + widget.edgeOffset,
                 child: IgnorePointer(
                   child: Align(
-                    alignment: Alignment.topCenter,
+                    alignment: .topCenter,
                     child: FractionalTranslation(
                       translation: Offset(0, -1),
                       child: indicatorBuilder(
@@ -278,7 +277,7 @@ class _ClampingRefreshIndicatorState extends State<ClampingRefreshIndicator> wit
       child: Opacity(
         opacity: fadeFraction,
         child: RefreshProgressIndicator(
-          value: status == ClampingRefreshIndicatorStatus.pulling ? fraction * 0.8 : null,
+          value: status == .pulling ? fraction * 0.8 : null,
         ),
       ),
     );

@@ -41,3 +41,10 @@
 - Fixed a layout freezing issue by ensuring that `widget.enabled` is also verified during nested scroll physics and pointer events.
 
 - Added comprehensive documentation and code comments for internal animation and nested scroll handlers.
+
+## 1.4.0
+- Replaced the `flutter_appbar` dependency with `flutter_nested_scroll` for nested scroll coordination.
+
+- Removed the internal app bar controller and position from `BouncingRefreshIndicator`, preserving its collapse, expansion, and refresh animations.
+
+- Raised the minimum supported versions to Dart 3.12 and Flutter 3.44.

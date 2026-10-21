@@ -1,33 +1,23 @@
 name: flutter_refresh_indicator
-description: "This package provides a refresh indicator widget that is far more flexible and native-like than the default Flutter one, built on top of flutter_appbar."
-version: 1.3.0
+description: This package provides a refresh indicator widget that is far more flexible and native-like than the default Flutter one, built on top of flutter_nested_scroll.
+version: 1.4.0
 publisher: ttankkeo112@gmail.com
 repository: https://github.com/MTtankkeo/flutter_refresh_indicator
-keywords:
-  - flutter
+topics:
   - refresh
-  - pull-to-refresh
   - refresh-indicator
-  - native
-  - widget
-  - scroll
-  - bouncing
-  - clamping
-  - listview
+  - pull-to-refresh
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=1.17.0"
+  sdk: '>=3.12.0 <4.0.0'
+  flutter: '>=3.44.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_appbar: ">=1.7.0"
+  flutter_nested_scroll: ^1.0.0+1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-
-# The following section is specific to Flutter packages.
-flutter:

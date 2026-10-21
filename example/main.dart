@@ -13,19 +13,28 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         body: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: () => Future.delayed(Duration(milliseconds: 1000)),
-            child: ListView.builder(
-              itemCount: 100,
-              itemBuilder: (context, index) {
-                return Container(
-                  color: index % 2 == 0 ? Colors.red : Colors.blue,
-                  height: 50,
-                );
-              },
-            ),
-          ),
+          child: Example(),
         ),
+      ),
+    );
+  }
+}
+
+class Example extends StatelessWidget {
+  const Example({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: () => .delayed(Duration(seconds: 1)),
+      child: ListView.builder(
+        itemCount: 100,
+        itemBuilder: (context, index) {
+          return Container(
+            height: 50,
+            color: index % 2 == 0 ? Colors.red : Colors.blue,
+          );
+        },
       ),
     );
   }

@@ -1,13 +1,16 @@
 # Introduction
-This package provides a refresh indicator widget that is far more flexible and native-like than the default Flutter one, built on top of [flutter_appbar](https://pub.dev/packages/flutter_appbar).
+
+This package provides a refresh indicator widget that is far more flexible and native-like than the default Flutter one, built on top of [flutter_nested_scroll](https://pub.dev/packages/flutter_nested_scroll).
 
 ## Preview
+
 The gif image below may appear distorted and choppy due to compression.
 
 ![clamping](https://github.com/MTtankkeo/flutter_refresh_indicator/raw/refs/heads/main/image/clamping_preview.gif)
 ![bouncing](https://github.com/MTtankkeo/flutter_refresh_indicator/raw/refs/heads/main/image/bouncing_preview.gif)
 
 ## Usage
+
 The following explains the basic usage of this package.
 
 ### When Context
@@ -22,6 +25,7 @@ RefreshIndicator(
 ```
 
 ### When Android
+
 This widget for ClampingScrollPhysics.
 
 ```dart
@@ -32,6 +36,7 @@ ClampingRefreshIndicator(
 ```
 
 ### When IOS
+
 This widget for BouncingScrollPhysics.
 
 ```dart
@@ -44,12 +49,13 @@ BouncingRefreshIndicator(
 ### How to define the style globally.
 
 #### Using Material Theme
+
 This is the traditional way to define themes in Flutter.
 
 ```dart
 MaterialApp(
     theme: ThemeData(
-        progressIndicatorTheme: ProgressIndicatorThemeData(
+        progressIndicatorTheme: .new(
             color: ..., // foregroundColor
             refreshBackgroundColor: ... // backgroundColor
         )
@@ -58,6 +64,7 @@ MaterialApp(
 ```
 
 #### Using PrimaryRefreshIndicator widget
+
 PrimaryRefreshIndicator defines the refresh indicator style for its descendant widgets, similar to how PrimaryScrollController provides a scroll controller to its descendants.
 
 ```dart

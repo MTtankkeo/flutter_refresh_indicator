@@ -15,7 +15,7 @@ The following explains the basic usage of this package.
 
 ### When Context
 ```dart
-import 'package:flutter/material.dart' hide RefreshIndicator;
+import 'package:material_ui/material_ui.dart' hide RefreshIndicator;
 
 // Other Alias: PullToRefresh and SwipeToRefresh
 RefreshIndicator(

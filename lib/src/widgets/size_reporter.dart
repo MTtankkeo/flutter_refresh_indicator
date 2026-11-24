@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 /// A widget that measures the size of its [child] after layout
 /// and reports it through the [onSize] callback.
 class SizeReporter extends StatefulWidget {
-  const SizeReporter({
+  const new({
     super.key,
     required this.onSize,
     required this.child,

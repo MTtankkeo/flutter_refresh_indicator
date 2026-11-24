@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart' hide RefreshIndicator;
 import 'package:flutter_refresh_indicator/flutter_refresh_indicator.dart';
+import 'package:material_ui/material_ui.dart' hide RefreshIndicator;
 
 void main() {
   runApp(MainApp());
@@ -26,9 +26,9 @@ class Example extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: () => .delayed(Duration(seconds: 1)),
+      onRefresh: () => .delayed(.new(seconds: 1)),
       child: ListView.builder(
-        itemCount: 100,
+        itemCount: 50,
         itemBuilder: (context, index) {
           return Container(
             height: 50,

@@ -48,3 +48,12 @@
 - Removed the internal app bar controller and position from `BouncingRefreshIndicator`, preserving its collapse, expansion, and refresh animations.
 
 - Raised the minimum supported versions to Dart 3.12 and Flutter 3.44.
+
+## 1.5.0
+- Migrated Material and Cupertino widgets to `material_ui` and `cupertino_ui`.
+
+- Moved widget implementations from `lib/widgets` to `lib/src/widgets`.
+
+- Raised the minimum `flutter_nested_scroll` version to 1.2.0.
+
+- Raised the minimum supported versions to Dart 3.13 and Flutter 3.47.

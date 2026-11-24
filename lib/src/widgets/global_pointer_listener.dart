@@ -7,7 +7,7 @@ import 'package:flutter/widgets.dart';
 /// user interactions like pull gestures or pointer releases.
 @protected
 class GlobalPointerListener extends StatefulWidget {
-  const GlobalPointerListener({
+  const new({
     super.key,
     this.onPointerDown,
     this.onPointerMove,
